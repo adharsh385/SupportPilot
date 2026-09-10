@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        SupportPilot - New Ticket
+    </title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <style>
+
+        body {
+            background: #f4f6f9;
+        }
+
+        .workflow-step {
+            padding: 14px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .number-circle {
+            display: inline-flex;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            background: #0d6efd;
+            color: white;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            font-family: inherit;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<nav class="navbar navbar-dark bg-dark px-4">
+
+    <span class="navbar-brand">
+        🟦 SupportPilot
+    </span>
+
+    <div>
+
+        <a
+            href="/dashboard"
+            class="btn btn-outline-light me-2"
+        >
+            Dashboard
+        </a>
+
+        <a
+            href="/logout"
+            class="btn btn-outline-light"
+        >
+            Logout
+        </a>
+
+    </div>
+
+</nav>
+
+<div class="container-fluid p-4">
+
+    <div class="mb-4">
+
+        <h2>
+            Submit Support Ticket
+        </h2>
+
+        <p class="text-muted">
+             AI Ticket Resolution Agent
+        </p>
+
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-xl-6">
+
+            <div class="card shadow-sm">
+
+                <div class="card-body">
+
+                    <form id="ticketForm">
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Employee Name
+                            </label>
+
+                            <input
+                                id="employee_name"
+                                class="form-control"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Email
+                            </label>
+
+                            <input
+                                id="email"
+                                type="email"
+                                class="form-control"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Department
+                            </label>
+
+                            <input
+                                id="department"
+                                class="form-control"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Ticket Title
+                            </label>
+
+                            <input
+                                id="title"
+                                class="form-control"
+                                placeholder="Example: VPN not connecting"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Description
+                            </label>
+
+                            <textarea
+                                id="description"
+                                class="form-control"
+                                rows="7"
+                                placeholder="Describe the technical problem"
+                                required
+                            ></textarea>
+
+                        </div>
+
+                        <button
+                            id="submitButton"
+                            class="btn btn-primary w-100"
+                        >
+                            Process Ticket with AI
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-xl-6">
+
+            <div class="card shadow-sm mb-4">
+
+                <div class="card-body">
+
+                    <h5>
+                        AI Resolution Workflow
+                    </h5>
+
+                    <div class="border rounded mt-3">
+
+                        <div class="workflow-step">
+
+                            <span class="number-circle">
+                                1
+                            </span>
+
+                            Ticket Analysis & Query Generation
+
+                            <span
+                                id="status1"
+                                class="badge bg-secondary float-end"
+                            >
+                                Waiting
+                            </span>
+
+                        </div>
+
+                        <div class="workflow-step">
+
+                            <span class="number-circle">
+                                2
+                            </span>
+
+                            Knowledge Base Retrieval
+
+                            <span
+                                id="status2"
+                                class="badge bg-secondary float-end"
+                            >
+                                Waiting
+                            </span>
+
+                        </div>
+
+                        <div class="workflow-step">
+
+                            <span class="number-circle">
+                                3
+                            </span>
+
+                            Context Augmentation
+
+                            <span
+                                id="status3"
+                                class="badge bg-secondary float-end"
+                            >
+                                Waiting
+                            </span>
+
+                        </div>
+
+                        <div class="workflow-step">
+
+                            <span class="number-circle">
+                                4
+                            </span>
+
+                            Response Generation
+
+                            <span
+                                id="status4"
+                                class="badge bg-secondary float-end"
+                            >
+                                Waiting
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div
+                id="ticketDetailsCard"
+                class="card shadow-sm mb-4 d-none"
+            >
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <h5 class="mb-0">
+                            Ticket Details
+                        </h5>
+
+                        <span
+                            id="ticketStatus"
+                            class="badge bg-primary"
+                        ></span>
+
+                    </div>
+
+                    <dl class="row mt-3 mb-0">
+
+                        <dt class="col-sm-4">Ticket ID</dt>
+                        <dd id="ticketId" class="col-sm-8"></dd>
+
+                        <dt class="col-sm-4">Employee</dt>
+                        <dd id="ticketEmployee" class="col-sm-8"></dd>
+
+                        <dt class="col-sm-4">Email</dt>
+                        <dd id="ticketEmail" class="col-sm-8"></dd>
+
+                        <dt class="col-sm-4">Department</dt>
+                        <dd id="ticketDepartment" class="col-sm-8"></dd>
+
+                        <dt class="col-sm-4">Title</dt>
+                        <dd id="ticketTitle" class="col-sm-8"></dd>
+
+                        <dt class="col-sm-4">Description</dt>
+                        <dd id="ticketDescription" class="col-sm-8"></dd>
+
+                    </dl>
+
+                </div>
+
+            </div>
+
+            <div
+                id="classificationCard"
+                class="card shadow-sm mb-4 d-none"
+            >
+
+                <div class="card-body">
+
+                    <h5>
+                        🤖 Ticket Classification
+                    </h5>
+
+                    <div class="row text-center mt-3">
+
+                        <div class="col-4">
+
+                            <small>
+                                Category
+                            </small>
+
+                            <h5 id="category"></h5>
+
+                        </div>
+
+                        <div class="col-4">
+
+                            <small>
+                                Severity
+                            </small>
+
+                            <h5 id="severity"></h5>
+
+                        </div>
+
+                        <div class="col-4">
+
+                            <small>
+                                Priority
+                            </small>
+
+                            <h5 id="priority"></h5>
+
+                        </div>
+
+                    </div>
+
+                    <hr>
+
+                    <p>
+                        <strong>
+                            Confidence:
+                        </strong>
+
+                        <span id="confidence"></span>
+                    </p>
+
+                    <p class="mb-0">
+
+                        <strong>
+                            Business Impact:
+                        </strong>
+
+                        <span id="impact"></span>
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div
+                id="documentsCard"
+                class="card shadow-sm mb-4 d-none"
+            >
+
+                <div class="card-body">
+
+                    <h5>
+                        📚 Retrieved Knowledge
+                    </h5>
+
+                    <div id="documents"></div>
+
+                </div>
+
+            </div>
+
+            <div
+                id="resolutionCard"
+                class="card shadow-sm mb-4 d-none"
+            >
+
+                <div class="card-body">
+
+                    <h5>
+                        💡 Generated Resolution
+                    </h5>
+
+                    <pre id="resolution"></pre>
+
+                </div>
+
+            </div>
+
+            <div
+                id="metricsCard"
+                class="card shadow-sm d-none"
+            >
+
+                <div class="card-body">
+
+                    <div class="row text-center">
+
+                        <div class="col-6">
+
+                            <small>
+                                Documents Retrieved
+                            </small>
+
+                            <h4 id="documentsCount">
+                                0
+                            </h4>
+
+                        </div>
+
+                        <div class="col-6">
+
+                            <small>
+                                Response Time
+                            </small>
+
+                            <h4>
+                                <span id="responseTime">
+                                    0
+                                </span>s
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+const form = document.getElementById(
+    "ticketForm"
+);
+
+
+function updateWorkflow(workflow) {
+
+    const map = {
+
+        ticket_analysis: "status1",
+
+        knowledge_retrieval: "status2",
+
+        context_augmentation: "status3",
+
+        response_generation: "status4"
+
+    };
+
+    for (
+        const [key, elementId]
+        of Object.entries(map)
+    ) {
+
+        const element =
+            document.getElementById(
+                elementId
+            );
+
+        const value =
+            workflow[key] || "waiting";
+
+        element.textContent =
+            value;
+
+        if (
+            value === "completed"
+        ) {
+
+            element.className =
+                "badge bg-success float-end";
+
+        }
+
+        else {
+
+            element.className =
+                "badge bg-secondary float-end";
+
+        }
+
+    }
+
+}
+
+
+form.addEventListener(
+    "submit",
+    async function(event) {
+
+        event.preventDefault();
+
+        const button =
+            document.getElementById(
+                "submitButton"
+            );
+
+        button.disabled = true;
+
+        button.textContent =
+            "Processing...";
+
+        try {
+
+            const payload = {
+
+                employee_name:
+                    document.getElementById(
+                        "employee_name"
+                    ).value,
+
+                email:
+                    document.getElementById(
+                        "email"
+                    ).value,
+
+                department:
+                    document.getElementById(
+                        "department"
+                    ).value,
+
+                title:
+                    document.getElementById(
+                        "title"
+                    ).value,
+
+                description:
+                    document.getElementById(
+                        "description"
+                    ).value
+
+            };
+
+            const response =
+                await fetch(
+                    "/ticket",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify(
+                                payload
+                            )
+                    }
+                );
+
+            const result =
+                await response.json();
+
+            if (
+                !response.ok
+                ||
+                !result.success
+            ) {
+
+                throw new Error(
+                    result.message
+                    ||
+                    "Unable to process ticket."
+                );
+
+            }
+
+            const ticket = result.ticket;
+
+            document
+                .getElementById(
+                    "ticketId"
+                )
+                .textContent =
+                    ticket.id;
+
+            document
+                .getElementById(
+                    "ticketEmployee"
+                )
+                .textContent =
+                    ticket.employee_name;
+
+            document
+                .getElementById(
+                    "ticketEmail"
+                )
+                .textContent =
+                    ticket.email;
+
+            document
+                .getElementById(
+                    "ticketDepartment"
+                )
+                .textContent =
+                    ticket.department;
+
+            document
+                .getElementById(
+                    "ticketTitle"
+                )
+                .textContent =
+                    ticket.title;
+
+            document
+                .getElementById(
+                    "ticketDescription"
+                )
+                .textContent =
+                    ticket.description;
+
+            document
+                .getElementById(
+                    "ticketStatus"
+                )
+                .textContent =
+                    ticket.status;
+
+            document
+                .getElementById(
+                    "ticketDetailsCard"
+                )
+                .classList.remove(
+                    "d-none"
+                );
+
+            document
+                .getElementById(
+                    "classificationCard"
+                )
+                .classList.remove(
+                    "d-none"
+                );
+
+            document
+                .getElementById(
+                    "category"
+                )
+                .textContent =
+                    result.classification.category;
+
+            document
+                .getElementById(
+                    "severity"
+                )
+                .textContent =
+                    result.classification.severity;
+
+            document
+                .getElementById(
+                    "priority"
+                )
+                .textContent =
+                    result.classification.priority;
+
+            document
+                .getElementById(
+                    "confidence"
+                )
+                .textContent =
+                    (
+                        result.classification.confidence
+                        * 100
+                    ).toFixed(1) + "%";
+
+            document
+                .getElementById(
+                    "impact"
+                )
+                .textContent =
+                    result.classification.business_impact;
+
+            updateWorkflow(
+                result.rag_workflow
+            );
+
+            const documents =
+                document.getElementById(
+                    "documents"
+                );
+
+            documents.innerHTML = "";
+
+            result.retrieved_documents.forEach(
+                doc => {
+
+                    documents.innerHTML += `
+
+                        <div class="border rounded p-3 mt-3">
+
+                            <strong>
+                                ${doc.title}
+                            </strong>
+
+                            <span
+                                class="
+                                    badge
+                                    bg-success
+                                    float-end
+                                "
+                            >
+                                ${(doc.score * 100).toFixed(0)}%
+                            </span>
+
+                            <div
+                                class="
+                                    text-muted
+                                    small
+                                    mt-2
+                                "
+                            >
+                                ${doc.id}
+                                •
+                                ${doc.category}
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }
+            );
+
+            document
+                .getElementById(
+                    "documentsCard"
+                )
+                .classList.remove(
+                    "d-none"
+                );
+
+            document
+                .getElementById(
+                    "resolution"
+                )
+                .textContent =
+                    result.recommended_resolution;
+
+            document
+                .getElementById(
+                    "resolutionCard"
+                )
+                .classList.remove(
+                    "d-none"
+                );
+
+            document
+                .getElementById(
+                    "documentsCount"
+                )
+                .textContent =
+                    result.metrics.documents_retrieved;
+
+            document
+                .getElementById(
+                    "responseTime"
+                )
+                .textContent =
+                    result.metrics.response_time_seconds;
+
+            document
+                .getElementById(
+                    "metricsCard"
+                )
+                .classList.remove(
+                    "d-none"
+                );
+
+        }
+
+        catch (error) {
+
+            alert(
+                "Error: "
+                + error.message
+            );
+
+        }
+
+        finally {
+
+            button.disabled = false;
+
+            button.textContent =
+                "Process Ticket with AI";
+
+        }
+
+    }
+);
+
+</script>
+
+</body>
+
+</html>

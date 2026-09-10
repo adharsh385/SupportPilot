@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        SupportPilot - AI Ticket Resolution Agent
+    </title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <style>
+
+        body {
+            background: #f4f6f9;
+        }
+
+        .sidebar {
+            min-height: 100vh;
+            background: #ffffff;
+            border-right: 1px solid #dee2e6;
+        }
+
+        .brand-box {
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .workflow-step {
+            padding: 12px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .number-circle {
+            display: inline-flex;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            background: #0d6efd;
+            color: white;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .result-card {
+            border-left: 4px solid #0d6efd;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            font-family: inherit;
+            margin-bottom: 0;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container-fluid">
+
+    <div class="row">
+
+        <aside
+            class="col-lg-2 sidebar p-4"
+        >
+
+            <div class="brand-box mb-5">
+                🟦 SupportPilot
+            </div>
+
+            <div class="nav flex-column gap-3">
+
+                <span>
+                    ▦ Dashboard
+                </span>
+
+                <strong>
+                    🎫 Tickets
+                </strong>
+
+                <span>
+                    💡 AI Agent
+                </span>
+
+                <span>
+                    ◫ Analytics
+                </span>
+
+            </div>
+
+        </aside>
+
+        <main
+            class="col-lg-10 p-4"
+        >
+
+            <div
+                class="
+                    d-flex
+                    justify-content-between
+                    align-items-start
+                    mb-4
+                "
+            >
+
+                <div>
+
+                    <h2>
+                        Knowledge Retrieval &
+                        Resolution Generation
+                    </h2>
+
+                    <p
+                        class="text-muted mb-0"
+                    >
+                        Combined Milestone 1 +
+                        Milestone 2 SupportPilot System
+                    </p>
+
+                </div>
+
+                <span
+                    class="
+                        badge
+                        bg-success
+                        fs-6
+                    "
+                >
+                    Milestone 1 + 2
+                </span>
+
+            </div>
+
+            <div class="row g-4">
+
+                <section
+                    class="col-xl-6"
+                >
+
+                    <div
+                        class="
+                            card
+                            shadow-sm
+                            mb-4
+                        "
+                    >
+
+                        <div class="card-body">
+
+                            <h5>
+                                🎫 Submit Support Ticket
+                            </h5>
+
+                            <form
+                                id="ticketForm"
+                            >
+
+                                <div
+                                    class="row g-3"
+                                >
+
+                                    <div
+                                        class="col-md-6"
+                                    >
+
+                                        <label
+                                            class="form-label"
+                                        >
+                                            Employee Name
+                                        </label>
+
+                                        <input
+                                            id="employee_name"
+                                            class="form-control"
+                                            value="Arun"
+                                            required
+                                        >
+
+                                    </div>
+
+                                    <div
+                                        class="col-md-6"
+                                    >
+
+                                        <label
+                                            class="form-label"
+                                        >
+                                            Email
+                                        </label>
+
+                                        <input
+                                            id="email"
+                                            type="email"
+                                            class="form-control"
+                                            value="arun@company.com"
+                                            required
+                                        >
+
+                                    </div>
+
+                                    <div
+                                        class="col-md-12"
+                                    >
+
+                                        <label
+                                            class="form-label"
+                                        >
+                                            Department
+                                        </label>
+
+                                        <input
+                                            id="department"
+                                            class="form-control"
+                                            value="Sales"
+                                            required
+                                        >
+
+                                    </div>
+
+                                    <div
+                                        class="col-md-12"
+                                    >
+
+                                        <label
+                                            class="form-label"
+                                        >
+                                            Ticket Title
+                                        </label>
+
+                                        <input
+                                            id="title"
+                                            class="form-control"
+                                            value="VPN Connection Failing on Corporate Network"
+                                            required
+                                        >
+
+                                    </div>
+
+                                    <div
+                                        class="col-md-12"
+                                    >
+
+                                        <label
+                                            class="form-label"
+                                        >
+                                            Ticket Description
+                                        </label>
+
+                                        <textarea
+                                            id="description"
+                                            class="form-control"
+                                            rows="5"
+                                            required
+                                        >Unable to connect to VPN since this morning. Error message: Connection timed out. I have an important client meeting and cannot work.</textarea>
+
+                                    </div>
+
+                                </div>
+
+                                <button
+                                    id="submitButton"
+                                    class="
+                                        btn
+                                        btn-primary
+                                        w-100
+                                        mt-4
+                                    "
+                                >
+                                    Process Ticket with AI
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    </div>
+
+                    <div
+                        id="classificationCard"
+                        class="
+                            card
+                            shadow-sm
+                            mb-4
+                            d-none
+                        "
+                    >
+
+                        <div class="card-body">
+
+                            <h5>
+                                🤖 Milestone 1 -
+                                Ticket Analysis
+                            </h5>
+
+                            <div
+                                class="
+                                    row
+                                    text-center
+                                    mt-3
+                                "
+                            >
+
+                                <div
+                                    class="col-4"
+                                >
+
+                                    <div
+                                        class="
+                                            border
+                                            rounded
+                                            p-3
+                                        "
+                                    >
+
+                                        <small
+                                            class="text-muted"
+                                        >
+                                            Category
+                                        </small>
+
+                                        <h5
+                                            id="category"
+                                            class="mt-2"
+                                        ></h5>
+
+                                    </div>
+
+                                </div>
+
+                                <div
+                                    class="col-4"
+                                >
+
+                                    <div
+                                        class="
+                                            border
+                                            rounded
+                                            p-3
+                                        "
+                                    >
+
+                                        <small
+                                            class="text-muted"
+                                        >
+                                            Severity
+                                        </small>
+
+                                        <h5
+                                            id="severity"
+                                            class="mt-2"
+                                        ></h5>
+
+                                    </div>
+
+                                </div>
+
+                                <div
+                                    class="col-4"
+                                >
+
+                                    <div
+                                        class="
+                                            border
+                                            rounded
+                                            p-3
+                                        "
+                                    >
+
+                                        <small
+                                            class="text-muted"
+                                        >
+                                            Priority
+                                        </small>
+
+                                        <h5
+                                            id="priority"
+                                            class="mt-2"
+                                        ></h5>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <p
+                                class="mt-3 mb-1"
+                            >
+                                <strong>
+                                    Confidence:
+                                </strong>
+
+                                <span
+                                    id="confidence"
+                                ></span>
+                            </p>
+
+                            <p
+                                class="mb-0"
+                            >
+                                <strong>
+                                    Business Impact:
+                                </strong>
+
+                                <span
+                                    id="impact"
+                                ></span>
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <div
+                        id="documentsCard"
+                        class="
+                            card
+                            shadow-sm
+                            d-none
+                        "
+                    >
+
+                        <div class="card-body">
+
+                            <h5>
+                                📚 Retrieved Knowledge
+                                Base Articles
+                            </h5>
+
+                            <div
+                                id="documents"
+                            ></div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <section
+                    class="col-xl-6"
+                >
+
+                    <div
+                        class="
+                            card
+                            shadow-sm
+                            mb-4
+                        "
+                    >
+
+                        <div class="card-body">
+
+                            <h5>
+                                💡 AI Resolution Generator
+                            </h5>
+
+                            <div
+                                class="
+                                    border
+                                    rounded
+                                    mt-3
+                                "
+                            >
+
+                                <div
+                                    class="workflow-step"
+                                >
+
+                                    <span
+                                        class="number-circle"
+                                    >
+                                        1
+                                    </span>
+
+                                    Ticket Analysis &
+                                    Query Generation
+
+                                    <span
+                                        id="status1"
+                                        class="
+                                            badge
+                                            bg-secondary
+                                            float-end
+                                        "
+                                    >
+                                        Waiting
+                                    </span>
+
+                                </div>
+
+                                <div
+                                    class="workflow-step"
+                                >
+
+                                    <span
+                                        class="number-circle"
+                                    >
+                                        2
+                                    </span>
+
+                                    Knowledge Base Retrieval
+
+                                    <span
+                                        id="status2"
+                                        class="
+                                            badge
+                                            bg-secondary
+                                            float-end
+                                        "
+                                    >
+                                        Waiting
+                                    </span>
+
+                                </div>
+
+                                <div
+                                    class="workflow-step"
+                                >
+
+                                    <span
+                                        class="number-circle"
+                                    >
+                                        3
+                                    </span>
+
+                                    Context Augmentation
+
+                                    <span
+                                        id="status3"
+                                        class="
+                                            badge
+                                            bg-secondary
+                                            float-end
+                                        "
+                                    >
+                                        Waiting
+                                    </span>
+
+                                </div>
+
+                                <div
+                                    class="workflow-step"
+                                >
+
+                                    <span
+                                        class="number-circle"
+                                    >
+                                        4
+                                    </span>
+
+                                    Response Generation
+
+                                    <span
+                                        id="status4"
+                                        class="
+                                            badge
+                                            bg-secondary
+                                            float-end
+                                        "
+                                    >
+                                        Waiting
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div
+                        id="resolutionCard"
+                        class="
+                            card
+                            shadow-sm
+                            result-card
+                            d-none
+                        "
+                    >
+
+                        <div class="card-body">
+
+                            <h5>
+                                Generated Resolution
+                            </h5>
+
+                            <pre
+                                id="resolution"
+                            ></pre>
+
+                        </div>
+
+                    </div>
+
+                    <div
+                        id="metricsCard"
+                        class="
+                            row
+                            g-3
+                            mt-1
+                            d-none
+                        "
+                    >
+
+                        <div
+                            class="col-6"
+                        >
+
+                            <div
+                                class="
+                                    card
+                                    text-center
+                                    shadow-sm
+                                "
+                            >
+
+                                <div
+                                    class="card-body"
+                                >
+
+                                    <small>
+                                        Documents Retrieved
+                                    </small>
+
+                                    <h4
+                                        id="documentsCount"
+                                    ></h4>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div
+                            class="col-6"
+                        >
+
+                            <div
+                                class="
+                                    card
+                                    text-center
+                                    shadow-sm
+                                "
+                            >
+
+                                <div
+                                    class="card-body"
+                                >
+
+                                    <small>
+                                        Response Time
+                                    </small>
+
+                                    <h4>
+                                        <span
+                                            id="responseTime"
+                                        ></span>s
+                                    </h4>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+        </main>
+
+    </div>
+
+</div>
+
+<script>
+
+const form = document.getElementById(
+    "ticketForm"
+);
+
+function updateWorkflow(workflow) {
+
+    const map = {
+
+        ticket_analysis:
+            "status1",
+
+        knowledge_retrieval:
+            "status2",
+
+        context_augmentation:
+            "status3",
+
+        response_generation:
+            "status4"
+
+    };
+
+    for (
+        const [key, elementId]
+        of Object.entries(map)
+    ) {
+
+        const element =
+            document.getElementById(
+                elementId
+            );
+
+        element.textContent =
+            workflow[key]
+            || "Waiting";
+
+        if (
+            workflow[key]
+            === "completed"
+        ) {
+
+            element.className =
+                "badge bg-success float-end";
+
+        }
+
+        else {
+
+            element.className =
+                "badge bg-secondary float-end";
+
+        }
+
+    }
+
+}
+
+form.addEventListener(
+    "submit",
+    async function(event) {
+
+        event.preventDefault();
+
+        const button =
+            document.getElementById(
+                "submitButton"
+            );
+
+        button.disabled = true;
+
+        button.textContent =
+            "Processing...";
+
+        try {
+
+            const payload = {
+
+                employee_name:
+                    document.getElementById(
+                        "employee_name"
+                    ).value,
+
+                email:
+                    document.getElementById(
+                        "email"
+                    ).value,
+
+                department:
+                    document.getElementById(
+                        "department"
+                    ).value,
+
+                title:
+                    document.getElementById(
+                        "title"
+                    ).value,
+
+                description:
+                    document.getElementById(
+                        "description"
+                    ).value
+
+            };
+
+            const response =
+                await fetch(
+                    "/ticket",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+                        body:
+                            JSON.stringify(
+                                payload
+                            )
+                    }
+                );
+
+            const result =
+                await response.json();
+
+            if (
+                !response.ok
+                ||
+                !result.success
+            ) {
+
+                throw new Error(
+                    result.message
+                    ||
+                    "Unable to process ticket."
+                );
+
+            }
+
+            document
+                .getElementById(
+                    "classificationCard"
+                )
+                .classList.remove(
+                    "d-none"
+                );
+
+            document
+                .getElementById(
+                    "category"
+                )
+                .textContent =
+                    result.classification
+                    .category;
+
+            document
+                .getElementById(
+                    "severity"
+                )
+                .textContent =
+                    result.classification
+                    .severity;
+
+            document
+                .getElementById(
+                    "priority"
+                )
+                .textContent =
+                    result.classification
+                    .priority;
+
+            document
+                .getElementById(
+                    "confidence"
+                )
+                .textContent =
+                    (
+                        result.classification
+                        .confidence * 100
+                    )
+                    .toFixed(1)
+                    + "%";
+
+            document
+                .getElementById(
+                    "impact"
+                )
+                .textContent =
+                    result.classification
+                    .business_impact;
+
+            updateWorkflow(
+                result.rag_workflow
+            );
+
+            const documents =
+                document.getElementById(
+                    "documents"
+                );
+
+            documents.innerHTML = "";
+
+            result.retrieved_documents
+                .forEach(doc => {
+
+                    documents.innerHTML += `
+
+                        <div
+                            class="
+                                border
+                                rounded
+                                p-3
+                                mt-3
+                            "
+                        >
+
+                            <div
+                                class="
+                                    d-flex
+                                    justify-content-between
+                                "
+                            >
+
+                                <strong>
+                                    ${doc.title}
+                                </strong>
+
+                                <span
+                                    class="
+                                        badge
+                                        bg-success
+                                    "
+                                >
+                                    ${(
+                                        doc.score * 100
+                                    ).toFixed(0)}%
+                                    relevance
+                                </span>
+
+                            </div>
+
+                            <div
+                                class="
+                                    text-muted
+                                    small
+                                "
+                            >
+                                ${doc.id}
+                                •
+                                ${doc.category}
+                            </div>
+
+                        </div>
+
+                    `;
+
+                });
+
+            document
+                .getElementById(
+                    "documentsCard"
+                )
+                .classList.remove(
+                    "d-none"
+                );
+
+            document
+                .getElementById(
+                    "resolution"
+                )
+                .textContent =
+                    result.recommended_resolution;
+
+            document
+                .getElementById(
+                    "resolutionCard"
+                )
+                .classList.remove(
+                    "d-none"
+                );
+
+            document
+                .getElementById(
+                    "documentsCount"
+                )
+                .textContent =
+                    result.metrics
+                    .documents_retrieved;
+
+            document
+                .getElementById(
+                    "responseTime"
+                )
+                .textContent =
+                    result.metrics
+                    .response_time_seconds;
+
+            document
+                .getElementById(
+                    "metricsCard"
+                )
+                .classList.remove(
+                    "d-none"
+                );
+
+        }
+
+        catch (error) {
+
+            alert(
+                "Error: "
+                + error.message
+            );
+
+        }
+
+        finally {
+
+            button.disabled = false;
+
+            button.textContent =
+                "Process Ticket with AI";
+
+        }
+
+    }
+
+);
+
+</script>
+
+</body>
+
+</html>
