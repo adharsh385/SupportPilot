@@ -3,48 +3,106 @@
         "id": "KB001",
         "title": "VPN Troubleshooting Guide",
         "category": "Network Connectivity",
-        "content": "1. Verify that the user has an active internet connection.\n2. Check VPN client configuration.\n3. Verify the VPN server address.\n4. Verify authentication settings.\n5. Restart the VPN service.\n6. Clear cached credentials if authentication fails."
+        "content": [
+            "Check that the device has an active internet connection.",
+            "Open the VPN client and verify the VPN configuration.",
+            "Check the VPN server address.",
+            "Verify username, password and authentication settings.",
+            "Restart the VPN client.",
+            "Clear cached VPN credentials.",
+            "Try connecting to the VPN again."
+        ],
+        "active": true
     },
     {
         "id": "KB002",
         "title": "Network Firewall Configuration",
         "category": "IT Policies",
-        "content": "1. Verify that corporate firewall settings allow VPN traffic.\n2. For IPsec-based VPN connections, verify that the required ports including 500 and 4500 are permitted."
+        "content": [
+            "Verify that VPN traffic is allowed through the firewall.",
+            "For IPsec VPN connections, verify required ports.",
+            "Check that UDP port 500 is permitted.",
+            "Check that UDP port 4500 is permitted.",
+            "Contact the network administrator if firewall access is blocked."
+        ],
+        "active": true
     },
     {
         "id": "KB003",
         "title": "VPN Authentication Problems",
         "category": "Authentication",
-        "content": "1. Verify the username and password.\n2. Verify MFA configuration.\n3. Clear cached credentials.\n4. Check the authentication method configured in the VPN client."
+        "content": [
+            "Verify the username and password.",
+            "Check multi-factor authentication.",
+            "Clear cached credentials.",
+            "Verify the configured authentication method.",
+            "Retry authentication after confirming account status."
+        ],
+        "active": true
     },
     {
         "id": "KB004",
         "title": "Password Reset Guide",
         "category": "Password",
-        "content": "1. Verify the user's identity.\n2. Open the password reset system.\n3. Reset the password.\n4. Ask the user to create a strong new password.\n5. Ask the user to sign in again."
+        "content": [
+            "Open the company password reset page.",
+            "Enter the registered employee account.",
+            "Complete identity verification.",
+            "Create a new secure password.",
+            "Sign in again using the new password."
+        ],
+        "active": true
     },
     {
         "id": "KB005",
         "title": "Network Connectivity Troubleshooting",
         "category": "Network",
-        "content": "1. Check the internet connection.\n2. Restart the network adapter.\n3. Check DNS settings.\n4. Restart the computer.\n5. Contact the network administrator if the problem continues."
+        "content": [
+            "Check the network cable or Wi-Fi connection.",
+            "Restart the network adapter.",
+            "Check the device IP configuration.",
+            "Restart the network connection if permitted.",
+            "Contact the network team if connectivity remains unavailable."
+        ],
+        "active": true
     },
     {
         "id": "KB006",
         "title": "Software Installation Guide",
         "category": "Software",
-        "content": "1. Verify that the user has permission to install the software.\n2. Download the approved version.\n3. Run the installer.\n4. Restart the application.\n5. Contact IT support if the error continues."
+        "content": [
+            "Verify that the software is approved.",
+            "Check system requirements.",
+            "Run the installer with the required permissions.",
+            "Restart the system after installation if required.",
+            "Contact IT support if installation continues to fail."
+        ],
+        "active": true
     },
     {
         "id": "KB007",
         "title": "Hardware Troubleshooting Guide",
         "category": "Hardware",
-        "content": "1. Check that the device cables are connected.\n2. Restart the computer.\n3. Reconnect the affected hardware device.\n4. Update the device driver.\n5. Escalate to hardware support if the problem continues."
+        "content": [
+            "Check that the hardware device is connected correctly.",
+            "Restart the computer.",
+            "Check device drivers.",
+            "Try another compatible port if available.",
+            "Contact hardware support if the problem continues."
+        ],
+        "active": true
     },
     {
         "id": "KB008",
         "title": "System Recovery Guide",
         "category": "System",
-        "content": "1. Restart the computer.\n2. Check recent system changes or updates.\n3. Review the error message.\n4. Run the approved system recovery procedure.\n5. Escalate if the system cannot be restored."
+        "content": [
+            "Save any available work.",
+            "Restart the computer.",
+            "Check system updates.",
+            "Review system error messages.",
+            "Contact system administration if the issue continues."
+        ],
+        "active": true
     }
 ]

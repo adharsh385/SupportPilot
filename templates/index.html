@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        SupportPilot - AI Ticket Resolution Agent
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+<div class="app-container">
+
+
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-logo">
+                SP
+            </div>
+
+            <strong>
+                SupportPilot
+            </strong>
+
+        </div>
+
+
+        <nav>
+
+            <a class="menu-item" href="{{ url_for('dashboard') }}">
+                ▦
+                Dashboard
+            </a>
+
+            <a class="menu-item" href="{{ url_for('tickets') }}">
+                ▣
+                Tickets
+            </a>
+
+            <a class="menu-item active" href="{{ url_for('agent_page') }}">
+                ♙
+                AI Agent
+            </a>
+
+            <a class="menu-item" href="{{ url_for('integrations') }}">
+                ▤
+                Integrations
+            </a>
+
+            <a class="menu-item" href="{{ url_for('analytics') }}">
+                ▥
+                Analytics
+            </a>
+
+            <a class="menu-item" href="{{ url_for('settings') }}">
+                ⚙
+                Settings
+            </a>
+
+        </nav>
+
+    </aside>
+
+
+    <main class="main-content">
+
+
+        <header class="top-header">
+
+            <div>
+
+                <h1>
+                    Multi-Agent Workflows & Integrations
+                </h1>
+
+                <p>
+                    Collaborative AI agents and enterprise integrations
+                </p>
+
+            </div>
+
+        </header>
+
+        <section class="card ticket-form-card">
+            <div class="result-header">
+                <div>
+                    <h2>Generate New Ticket</h2>
+                    <p>Submit a real support request for classification and AI resolution.</p>
+                </div>
+                <span id="formStatus"></span>
+            </div>
+            <form id="ticketForm" class="ticket-form">
+                <div class="form-grid">
+                    <label>Employee name<input name="employee_name" required placeholder="Your name"></label>
+                    <label>Email<input name="email" type="email" required placeholder="you@company.com"></label>
+                    <label>Department<input name="department" required placeholder="IT, Sales, Finance"></label>
+                    <label>Ticket title<input name="title" required placeholder="What is the issue?"></label>
+                </div>
+                <label>Description<textarea name="description" required rows="4" placeholder="Describe the problem, impact, and what you already tried."></textarea></label>
+                <label class="email-toggle"><input name="send_email" type="checkbox"> Send resolution notification by email</label>
+                <p class="email-help">The notification is sent to the email entered above. Live delivery requires the Gmail sender account and App Password in the project's <code>.env</code> file.</p>
+                <button type="submit" id="submitTicketButton">Submit ticket for AI resolution</button>
+            </form>
+        </section>
+
+
+        <div class="dashboard-grid">
+
+
+            <!-- WORKFLOW -->
+
+            <section class="card">
+
+                <h2>
+                    ⚙ Multi-Agent Workflow
+                </h2>
+
+
+                <div class="agent-flow">
+
+
+                    <div class="agent">
+
+                        <div class="circle blue">
+                            ◉
+                        </div>
+
+                        <b>
+                            Diagnosis
+                        </b>
+
+                        <small>
+                            Active
+                        </small>
+
+                    </div>
+
+
+                    <div class="line"></div>
+
+
+                    <div class="agent">
+
+                        <div class="circle green">
+                            ⌕
+                        </div>
+
+                        <b>
+                            Retrieval
+                        </b>
+
+                        <small>
+                            Active
+                        </small>
+
+                    </div>
+
+
+                    <div class="line"></div>
+
+
+                    <div class="agent">
+
+                        <div class="circle orange">
+                            ⚒
+                        </div>
+
+                        <b>
+                            Resolution
+                        </b>
+
+                        <small>
+                            Active
+                        </small>
+
+                    </div>
+
+
+                    <div class="line"></div>
+
+
+                    <div class="agent">
+
+                        <div class="circle red">
+                            ↑
+                        </div>
+
+                        <b>
+                            Escalation
+                        </b>
+
+                        <small id="escalationStatus">
+                            Standby
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <div class="activity">
+
+                    <h3>
+                        Current Workflow Activity
+                    </h3>
+
+                    <div id="activityList">
+
+                        <p>
+                            Waiting for ticket processing...
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    id="processButton"
+                >
+                    Run sample ticket
+                </button>
+
+            </section>
+
+
+
+            <!-- INTEGRATIONS -->
+
+            <section class="card">
+
+                <h2>
+                    ▣ Enterprise Integrations
+                </h2>
+
+
+                <div class="integration">
+
+                    <div class="integration-icon jira">
+                        J
+                    </div>
+
+                    <div class="integration-info">
+
+                        <b>
+                            Jira Integration
+                        </b>
+
+                        <small id="jiraMessage">
+                            Connected • Demo Mode
+                        </small>
+
+                    </div>
+
+                    <span id="jiraStatus">
+                        Active
+                    </span>
+
+                </div>
+
+
+                <div class="integration">
+
+                    <div class="integration-icon email">
+                        ✉
+                    </div>
+
+                    <div class="integration-info">
+
+                        <b>
+                            Email Automation
+                        </b>
+
+                        <small id="emailMessage">
+                            Connected • Demo Mode
+                        </small>
+
+                    </div>
+
+                    <span id="emailStatus">
+                        Active
+                    </span>
+
+                </div>
+
+
+                <div class="jira-box">
+
+                    <h3>
+                        Jira Ticket Created
+                    </h3>
+
+                    <div class="jira-grid">
+
+                        <div>
+
+                            <small>
+                                Ticket ID
+                            </small>
+
+                            <b id="jiraTicketId">
+                                SP-4521
+                            </b>
+
+                        </div>
+
+                        <div>
+
+                            <small>
+                                Status
+                            </small>
+
+                            <b id="jiraTicketStatus">
+                                In Progress
+                            </b>
+
+                        </div>
+
+                        <div>
+
+                            <small>
+                                Assignee
+                            </small>
+
+                            <b>
+                                Network Team
+                            </b>
+
+                        </div>
+
+                        <div>
+
+                            <small>
+                                Priority
+                            </small>
+
+                            <b id="jiraPriority">
+                                High
+                            </b>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="email-box">
+
+                    <h3>
+                        Email Notification Sent
+                    </h3>
+
+                    <p id="emailNotificationText">
+
+                        Your support ticket has been received.
+                        SupportPilot has identified potential
+                        solutions and processed the ticket.
+
+                    </p>
+
+                </div>
+
+            </section>
+
+        </div>
+
+
+
+        <!-- CLASSIFICATION -->
+
+        <section class="result-card">
+
+            <div class="result-header">
+
+                <h2>
+                    Ticket Classification
+                </h2>
+
+                <span id="ticketStatus"></span>
+
+            </div>
+
+            <p id="ticketOutcome" class="ticket-outcome">
+                Process a ticket to see whether it was resolved, escalated, or needs review.
+            </p>
+
+
+            <div class="result-grid">
+
+                <div>
+                    <small>
+                        Category
+                    </small>
+
+                    <b id="category">
+                        VPN
+                    </b>
+                </div>
+
+
+                <div>
+                    <small>
+                        Severity
+                    </small>
+
+                    <b id="severity">
+                        High
+                    </b>
+                </div>
+
+
+                <div>
+                    <small>
+                        Priority
+                    </small>
+
+                    <b id="priority">
+                        P2
+                    </b>
+                </div>
+
+
+                <div>
+                    <small>
+                        Confidence
+                    </small>
+
+                    <b id="confidence">
+                        98%
+                    </b>
+                </div>
+
+            </div>
+
+            <div class="resolution resolution-panel">
+                <div class="resolution-heading">
+                    <div>
+                        <span class="eyebrow">SupportPilot playbook</span>
+                        <h2>AI Generated Resolution</h2>
+                    </div>
+                    <span id="resolutionState" class="resolution-state">Waiting</span>
+                </div>
+                <div id="resolution" class="resolution-summary">
+                    Submit a ticket to generate an AI resolution.
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<script
+    src="{{ url_for('static', filename='js/script.js') }}"
+></script>
+
+</body>
+
+</html>

@@ -1,8 +1,8 @@
-from data.rag.analyzer import analyze_ticket
+from rag.analyzer import analyze_ticket
 
-from data.rag.retriever import KnowledgeRetriever
+from rag.retriever import KnowledgeRetriever
 
-from data.rag.generator import (
+from rag.generator import (
     build_context,
     generate_resolution
 )

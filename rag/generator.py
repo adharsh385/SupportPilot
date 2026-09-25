@@ -4,13 +4,17 @@ def build_context(results):
 
     for result in results:
 
+        content = result["content"]
+        if isinstance(content, list):
+            content = "\n".join(content)
+
         context_parts.append(
 
             f"SOURCE: {result['id']}\n"
             f"TITLE: {result['title']}\n"
             f"RELEVANCE: "
             f"{result['score']:.2f}\n\n"
-            f"{result['content']}"
+            f"{content}"
 
         )
 
@@ -53,20 +57,17 @@ def generate_resolution(
 
     for document in retrieved_docs:
 
-        for line in (
-            document["content"]
-            .splitlines()
-        ):
+        content = document["content"]
+        lines = content if isinstance(content, list) else content.splitlines()
+
+        for line in lines:
 
             line = line.strip()
 
             if not line:
                 continue
 
-            if (
-                line[0].isdigit()
-                and ". " in line
-            ):
+            if line and line[0].isdigit() and ". " in line:
 
                 instruction = (
                     line.split(

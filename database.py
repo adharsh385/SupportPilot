@@ -1,53 +1,38 @@
 import sqlite3
 
+from config import DATABASE_PATH
 from werkzeug.security import check_password_hash, generate_password_hash
-
-from config import (
-    DATABASE_PATH
-)
 
 
 def get_connection():
 
-    connection = sqlite3.connect(DATABASE_PATH)
-    connection.row_factory = sqlite3.Row
+    connection = sqlite3.connect(
+        DATABASE_PATH
+    )
+
+    connection.row_factory = (
+        sqlite3.Row
+    )
+
     return connection
 
 
 def initialize_database():
 
-    conn = get_connection()
+    connection = get_connection()
 
-    cursor = conn.cursor()
-
-    cursor.execute("""
-
-        CREATE TABLE IF NOT EXISTS users (
-
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-            username TEXT UNIQUE NOT NULL,
-
-            email TEXT UNIQUE NOT NULL,
-
-            password_hash TEXT NOT NULL
-
-        )
-
-    """)
+    cursor = connection.cursor()
 
     cursor.execute("""
-
         CREATE TABLE IF NOT EXISTS tickets (
 
-            ticket_id INTEGER
-            PRIMARY KEY AUTOINCREMENT,
+            ticket_id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-            employee_name TEXT,
+            employee_name TEXT NOT NULL,
 
-            email TEXT,
+            email TEXT NOT NULL,
 
-            department TEXT,
+            department TEXT NOT NULL,
 
             title TEXT NOT NULL,
 
@@ -63,180 +48,222 @@ def initialize_database():
 
             status TEXT DEFAULT 'Open',
 
+            resolution TEXT,
+
             created_at TIMESTAMP
-            DEFAULT CURRENT_TIMESTAMP
-
+                DEFAULT CURRENT_TIMESTAMP
         )
-
     """)
 
-    conn.commit()
-
-    conn.close()
-
-
-def save_ticket(ticket):
-
-    conn = get_connection()
-
-    cursor = conn.cursor()
-
     cursor.execute("""
-
-        INSERT INTO tickets (
-
-            employee_name,
-
-            email,
-
-            department,
-
-            title,
-
-            description,
-
-            category,
-
-            severity,
-
-            priority,
-
-            confidence,
-
-            status
-
+        CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            email TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
+    """)
 
-        VALUES (
-
-            ?, ?, ?, ?, ?,
-
-            ?, ?, ?, ?, ?
-
-        )
-
-    """, (
-
-        ticket.get(
-            "employee_name",
-            ""
-        ),
-
-        ticket.get(
-            "email",
-            ""
-        ),
-
-        ticket.get(
-            "department",
-            ""
-        ),
-
-        ticket["title"],
-
-        ticket["description"],
-
-        ticket["category"],
-
-        ticket["severity"],
-
-        ticket["priority"],
-
-        ticket["confidence"],
-
-        ticket.get(
-            "status",
-            "Open"
-        )
-
-    ))
-
-    conn.commit()
-
-    ticket_id = (
-        cursor.lastrowid
+    cursor.execute(
+        "SELECT user_id FROM users WHERE username = ?",
+        ("admin",)
     )
 
-    conn.close()
+    if cursor.fetchone() is None:
+        cursor.execute("""
+            INSERT INTO users (username, email, password_hash)
+            VALUES (?, ?, ?)
+        """, (
+            "admin",
+            "admin@supportpilot.local",
+            generate_password_hash("admin123")
+        ))
 
-    return ticket_id
+    connection.commit()
+
+    connection.close()
 
 
 def create_user(username, email, password):
 
-    conn = get_connection()
+    connection = get_connection()
 
     try:
-
-        cursor = conn.execute(
-            """
+        cursor = connection.cursor()
+        cursor.execute("""
             INSERT INTO users (username, email, password_hash)
             VALUES (?, ?, ?)
-            """,
-            (username, email, generate_password_hash(password))
-        )
-
-        conn.commit()
+        """, (
+            username.strip(),
+            email.strip(),
+            generate_password_hash(password)
+        ))
+        connection.commit()
         return cursor.lastrowid
-
     except sqlite3.IntegrityError:
-
         return None
-
     finally:
-
-        conn.close()
+        connection.close()
 
 
 def authenticate_user(username, password):
 
-    conn = get_connection()
-
-    user = conn.execute(
-        """
-        SELECT id, username, email, password_hash
+    connection = get_connection()
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT user_id, username, email, password_hash
         FROM users
         WHERE username = ? OR email = ?
-        """,
-        (username, username)
-    ).fetchone()
-
-    conn.close()
+    """, (username.strip(), username.strip()))
+    user = cursor.fetchone()
+    connection.close()
 
     if user and check_password_hash(user["password_hash"], password):
-
-        return dict(user)
+        return {
+            "user_id": user["user_id"],
+            "username": user["username"],
+            "email": user["email"]
+        }
 
     return None
 
 
+def save_ticket(ticket):
+
+    connection = get_connection()
+
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        INSERT INTO tickets (
+            employee_name,
+            email,
+            department,
+            title,
+            description,
+            category,
+            severity,
+            priority,
+            confidence,
+            status,
+            resolution
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        ticket["employee_name"],
+        ticket["email"],
+        ticket["department"],
+        ticket["title"],
+        ticket["description"],
+        ticket["category"],
+        ticket["severity"],
+        ticket["priority"],
+        ticket["confidence"],
+        ticket.get(
+            "status",
+            "Open"
+        ),
+        ticket.get(
+            "resolution",
+            ""
+        )
+    ))
+
+    ticket_id = cursor.lastrowid
+
+    connection.commit()
+
+    connection.close()
+
+    return ticket_id
+
+
+def update_ticket(
+    ticket_id,
+    status=None,
+    resolution=None
+):
+
+    connection = get_connection()
+
+    cursor = connection.cursor()
+
+    if (
+        status is not None
+        and resolution is not None
+    ):
+
+        cursor.execute("""
+            UPDATE tickets
+            SET status = ?,
+                resolution = ?
+            WHERE ticket_id = ?
+        """, (
+            status,
+            resolution,
+            ticket_id
+        ))
+
+    elif status is not None:
+
+        cursor.execute("""
+            UPDATE tickets
+            SET status = ?
+            WHERE ticket_id = ?
+        """, (
+            status,
+            ticket_id
+        ))
+
+    elif resolution is not None:
+
+        cursor.execute("""
+            UPDATE tickets
+            SET resolution = ?
+            WHERE ticket_id = ?
+        """, (
+            resolution,
+            ticket_id
+        ))
+
+    connection.commit()
+
+    connection.close()
+
+
 def get_all_tickets():
 
-    conn = get_connection()
+    connection = get_connection()
 
-    tickets = conn.execute(
-        """
-        SELECT * FROM tickets
-        WHERE status != 'Deleted'
-        ORDER BY created_at DESC, ticket_id DESC
-        """
-    ).fetchall()
+    cursor = connection.cursor()
 
-    conn.close()
+    cursor.execute("""
+        SELECT *
+        FROM tickets
+        ORDER BY ticket_id DESC
+    """)
 
-    return [dict(ticket) for ticket in tickets]
+    rows = cursor.fetchall()
+
+    connection.close()
+
+    return [
+        dict(row)
+        for row in rows
+    ]
 
 
 def delete_ticket(ticket_id):
 
-    conn = get_connection()
-
-    cursor = conn.execute(
-        "UPDATE tickets SET status = 'Deleted' WHERE ticket_id = ?",
+    connection = get_connection()
+    cursor = connection.cursor()
+    cursor.execute(
+        "DELETE FROM tickets WHERE ticket_id = ?",
         (ticket_id,)
     )
+    deleted = cursor.rowcount > 0
+    connection.commit()
+    connection.close()
 
-    conn.commit()
-    conn.close()
-
-    return cursor.rowcount > 0
+    return deleted

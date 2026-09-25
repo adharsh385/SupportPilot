@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>System Health | SupportPilot</title>
+    <style>
+        :root { --ink: #172033; --muted: #697487; --line: #e5e9ef; --blue: #1769e0; --green: #20845c; }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #eef3f7; color: var(--ink); font: 14px Arial, sans-serif; }
+        .layout { display: grid; grid-template-columns: 230px 1fr; min-height: 100vh; }
+        aside { padding: 28px 18px; background: #172033; color: white; }
+        .brand { display: flex; align-items: center; gap: 10px; padding: 0 10px 30px; font: 700 18px Georgia, serif; }
+        .mark { display: grid; place-items: center; width: 36px; height: 36px; background: #8de0c0; color: #172033; font-weight: bold; }
+        nav { display: grid; gap: 7px; }
+        nav a { padding: 12px 13px; color: #afbbca; text-decoration: none; border-left: 3px solid transparent; }
+        nav a:hover, nav a.active { color: white; background: #263149; border-left-color: #8de0c0; }
+        .logout { display: block; margin: 42px 13px; color: #afbbca; text-decoration: none; font-size: 13px; }
+        main { padding: 38px clamp(22px, 4vw, 58px); max-width: 1050px; }
+        h1, h2 { font-family: Georgia, serif; font-weight: normal; }
+        h1 { margin: 0 0 8px; font-size: clamp(32px, 4vw, 46px); }
+        .subtle { color: var(--muted); }
+        .summary, .service { padding: 22px; border: 1px solid var(--line); background: white; }
+        .summary { margin-top: 28px; border-left: 4px solid var(--green); }
+        .summary strong { display: block; margin-bottom: 5px; color: var(--green); font: 26px Georgia, serif; }
+        .services { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 18px; }
+        .service h2 { margin: 0 0 12px; font-size: 20px; }
+        .status { display: inline-block; padding: 6px 9px; border-radius: 99px; background: #e1f5eb; color: var(--green); font-size: 12px; font-weight: bold; }
+        .status.demo { background: #fff0d8; color: #99620a; }
+        .service p { color: var(--muted); line-height: 1.6; }
+        .button { display: inline-block; margin-top: 22px; padding: 11px 14px; border-radius: 3px; background: var(--blue); color: white; text-decoration: none; font-weight: bold; font-size: 12px; }
+        @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } aside { padding: 16px; } nav { display: flex; overflow: auto; } .logout { margin: 12px; } .services { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside>
+            <div class="brand"><div class="mark">SP</div>SupportPilot</div>
+            <nav>
+                <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('tickets') }}">Tickets</a>
+                <a href="{{ url_for('agent_page') }}">AI Agent</a>
+                <a href="{{ url_for('integrations') }}">Integrations</a>
+                <a href="{{ url_for('analytics') }}">Analytics</a>
+                <a href="{{ url_for('settings') }}">Settings</a>
+                <a class="active" href="{{ url_for('system_health') }}">System health</a>
+            </nav>
+            <a class="logout" href="{{ url_for('logout') }}">Log out</a>
+        </aside>
+        <main>
+            <h1>System health</h1>
+            <p class="subtle">Live status of the services behind your support workspace.</p>
+            <section class="summary"><strong>All core services operational</strong><span>Classification, RAG retrieval, resolution generation, and ticket storage are available.</span></section>
+            <section class="services">
+                <article class="service"><h2>Ticket classifier</h2><span class="status">Operational</span><p>Classifies category, severity, priority, and confidence for each submitted ticket.</p></article>
+                <article class="service"><h2>RAG workflow</h2><span class="status">Operational</span><p>Retrieves relevant knowledge and generates resolution steps for processed tickets.</p></article>
+                <article class="service"><h2>Database</h2><span class="status">Operational</span><p>Stores users, submitted tickets, statuses, and generated resolutions.</p></article>
+                <article class="service"><h2>Jira integration</h2><span class="status {{ '' if jira_configured else 'demo' }}">{{ 'Live' if jira_configured else 'Demo mode' }}</span><p>{{ 'Live issue creation is configured.' if jira_configured else 'Available in demo mode until Jira credentials are configured.' }}</p></article>
+                <article class="service"><h2>Email integration</h2><span class="status {{ '' if email_configured else 'demo' }}">{{ 'Live' if email_configured else 'Demo mode' }}</span><p>{{ 'Live notifications are configured.' if email_configured else 'Available in demo mode until SMTP credentials are configured.' }}</p></article>
+            </section>
+            <a class="button" href="{{ url_for('dashboard') }}">Back to dashboard</a>
+        </main>
+    </div>
+</body>
+</html>

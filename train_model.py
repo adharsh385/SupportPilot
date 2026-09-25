@@ -1,327 +1,118 @@
+import os
+
 import joblib
 
-from pathlib import Path
-
-from sklearn.feature_extraction.text import (
-    TfidfVectorizer
-)
-
-from sklearn.linear_model import (
-    LogisticRegression
-)
-
-from sklearn.pipeline import (
-    Pipeline
-)
-
-from config import MODEL_PATH
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
 
 
 training_data = [
 
-    (
-        "vpn connection not working",
-        "VPN"
-    ),
+    ("vpn connection not working", "VPN"),
+    ("vpn is not connecting", "VPN"),
+    ("vpn connection failed", "VPN"),
+    ("cannot connect to vpn", "VPN"),
+    ("vpn timeout error", "VPN"),
+    ("corporate vpn not working", "VPN"),
+    ("vpn keeps disconnecting", "VPN"),
+    ("remote vpn connection problem", "VPN"),
+    ("vpn authentication problem", "VPN"),
+    ("vpn cannot connect", "VPN"),
 
-    (
-        "unable to connect to vpn",
-        "VPN"
-    ),
+    ("internet connection not working", "Network"),
+    ("wifi is not working", "Network"),
+    ("network connection problem", "Network"),
+    ("internet is very slow", "Network"),
+    ("cannot access network", "Network"),
+    ("network disconnected", "Network"),
+    ("office wifi problem", "Network"),
+    ("network timeout", "Network"),
+    ("internet outage", "Network"),
+    ("network is down", "Network"),
 
-    (
-        "vpn connection failed",
-        "VPN"
-    ),
+    ("forgot my password", "Password"),
+    ("password reset required", "Password"),
+    ("cannot login because of password", "Password"),
+    ("password is not working", "Password"),
+    ("reset my account password", "Password"),
+    ("account password locked", "Password"),
+    ("login password problem", "Password"),
+    ("unable to reset password", "Password"),
 
-    (
-        "vpn timeout error",
-        "VPN"
-    ),
+    ("software installation problem", "Software"),
+    ("application is not working", "Software"),
+    ("software installation failed", "Software"),
+    ("application crashes", "Software"),
+    ("cannot install software", "Software"),
+    ("program is showing an error", "Software"),
+    ("application installation problem", "Software"),
+    ("software error", "Software"),
 
-    (
-        "corporate vpn not connecting",
-        "VPN"
-    ),
+    ("laptop is not working", "Hardware"),
+    ("keyboard is not working", "Hardware"),
+    ("mouse is not working", "Hardware"),
+    ("computer hardware problem", "Hardware"),
+    ("monitor is not working", "Hardware"),
+    ("laptop screen problem", "Hardware"),
+    ("printer hardware problem", "Hardware"),
+    ("computer hardware failure", "Hardware"),
 
-    (
-        "vpn server connection problem",
-        "VPN"
-    ),
-
-    (
-        "vpn client authentication issue",
-        "VPN"
-    ),
-
-    (
-        "cannot connect to company vpn",
-        "VPN"
-    ),
-
-    (
-        "internet connection not working",
-        "Network"
-    ),
-
-    (
-        "wifi is not working",
-        "Network"
-    ),
-
-    (
-        "network connection failed",
-        "Network"
-    ),
-
-    (
-        "dns connection problem",
-        "Network"
-    ),
-
-    (
-        "internet is slow",
-        "Network"
-    ),
-
-    (
-        "network timeout",
-        "Network"
-    ),
-
-    (
-        "wifi connection problem",
-        "Network"
-    ),
-
-    (
-        "ethernet not connecting",
-        "Network"
-    ),
-
-    (
-        "forgot my password",
-        "Password"
-    ),
-
-    (
-        "password reset required",
-        "Password"
-    ),
-
-    (
-        "unable to login",
-        "Password"
-    ),
-
-    (
-        "cannot sign in",
-        "Password"
-    ),
-
-    (
-        "password is not working",
-        "Password"
-    ),
-
-    (
-        "reset my account password",
-        "Password"
-    ),
-
-    (
-        "credentials are not working",
-        "Password"
-    ),
-
-    (
-        "login password problem",
-        "Password"
-    ),
-
-    (
-        "software installation failed",
-        "Software"
-    ),
-
-    (
-        "cannot install application",
-        "Software"
-    ),
-
-    (
-        "application is not working",
-        "Software"
-    ),
-
-    (
-        "software installation problem",
-        "Software"
-    ),
-
-    (
-        "program installation error",
-        "Software"
-    ),
-
-    (
-        "app is crashing",
-        "Software"
-    ),
-
-    (
-        "software error",
-        "Software"
-    ),
-
-    (
-        "application installation issue",
-        "Software"
-    ),
-
-    (
-        "keyboard is not working",
-        "Hardware"
-    ),
-
-    (
-        "mouse stopped working",
-        "Hardware"
-    ),
-
-    (
-        "monitor is not working",
-        "Hardware"
-    ),
-
-    (
-        "laptop hardware problem",
-        "Hardware"
-    ),
-
-    (
-        "computer screen problem",
-        "Hardware"
-    ),
-
-    (
-        "hardware device failed",
-        "Hardware"
-    ),
-
-    (
-        "keyboard problem",
-        "Hardware"
-    ),
-
-    (
-        "mouse problem",
-        "Hardware"
-    ),
-
-    (
-        "windows system error",
-        "System"
-    ),
-
-    (
-        "computer keeps crashing",
-        "System"
-    ),
-
-    (
-        "system is frozen",
-        "System"
-    ),
-
-    (
-        "operating system problem",
-        "System"
-    ),
-
-    (
-        "computer restart problem",
-        "System"
-    ),
-
-    (
-        "windows error",
-        "System"
-    ),
-
-    (
-        "system recovery required",
-        "System"
-    ),
-
-    (
-        "computer system failure",
-        "System"
-    )
-
+    ("computer system error", "System"),
+    ("system is very slow", "System"),
+    ("windows error", "System"),
+    ("computer freezes", "System"),
+    ("system restart problem", "System"),
+    ("operating system problem", "System"),
+    ("computer system problem", "System"),
+    ("system crash", "System")
 ]
 
 
-def train_and_save_model():
+texts = [
+    item[0]
+    for item in training_data
+]
 
-    texts = [
-        item[0]
-        for item in training_data
-    ]
 
-    labels = [
-        item[1]
-        for item in training_data
-    ]
+labels = [
+    item[1]
+    for item in training_data
+]
 
-    vectorizer = TfidfVectorizer(
-        lowercase=True,
-        stop_words="english",
-        ngram_range=(1, 2)
+
+model = Pipeline([
+    (
+        "tfidf",
+        TfidfVectorizer(
+            lowercase=True,
+            ngram_range=(1, 2),
+            sublinear_tf=True
+        )
+    ),
+    (
+        "classifier",
+        LogisticRegression(
+            max_iter=2000,
+            random_state=42
+        )
     )
-
-    vectors = vectorizer.fit_transform(
-        texts
-    )
-
-    model = LogisticRegression(
-        max_iter=1000
-    )
-
-    model.fit(
-        vectors,
-        labels
-    )
-
-    MODEL_PATH.parent.mkdir(
-        parents=True,
-        exist_ok=True
-    )
-
-    bundle = {
-
-        "vectorizer":
-            vectorizer,
-
-        "model":
-            model
-
-    }
-
-    joblib.dump(
-        bundle,
-        MODEL_PATH
-    )
-
-    print(
-        "Model trained successfully."
-    )
-
-    print(
-        f"Model saved to: {MODEL_PATH}"
-    )
+])
 
 
-if __name__ == "__main__":
+model.fit(
+    texts,
+    labels
+)
 
-    train_and_save_model()
+
+os.makedirs(
+    "models",
+    exist_ok=True
+)
+
+
+joblib.dump(
+    model,
+    "models/ticket_classifier.pkl"
+)

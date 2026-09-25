@@ -1,546 +1,667 @@
-import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
+from functools import wraps
 
-import jwt
 from flask import (
     Flask,
-    g,
-    request,
     jsonify,
-    render_template,
     redirect,
+    render_template,
+    request,
+    session,
     url_for
 )
 
-from config import (
-    JWT_EXPIRATION_MINUTES,
-    SECRET_KEY
-)
-
-from classifier import (
-    process_ticket
-)
-
+from classifier import process_ticket
 from database import (
-    initialize_database,
-    create_user,
-    authenticate_user,
-    save_ticket,
     get_all_tickets,
-    delete_ticket
+    initialize_database,
+    authenticate_user,
+    create_user,
+    delete_ticket,
+    save_ticket,
+    update_ticket
 )
+from agent import SupportPilot
+from email_service import send_email_notification
+from email_service import send_welcome_email
+from jira_service import create_jira_ticket
+from jira_service import jira_is_configured
+from email_service import email_is_configured
 
-from data.rag.pipeline import (
-    run_rag_pipeline
-)
 
-
-app = Flask(
-    __name__,
-    template_folder="data/rag/templates"
-)
-
-JWT_COOKIE_NAME = "access_token"
+app = Flask(__name__)
+app.secret_key = "supportpilot-development-key"
 
 initialize_database()
 
-
-def login_required():
-
-    token = request.cookies.get(
-        JWT_COOKIE_NAME
-    )
-
-    if not token:
-
-        authorization = request.headers.get(
-            "Authorization",
-            ""
-        )
-
-        if authorization.startswith("Bearer "):
-
-            token = authorization[7:].strip()
-
-    if not token:
-
-        return False
-
-    try:
-
-        g.current_user = jwt.decode(
-            token,
-            SECRET_KEY,
-            algorithms=["HS256"]
-        )
-
-        return True
-
-    except jwt.InvalidTokenError:
-
-        return False
+support_pilot = SupportPilot()
 
 
-def create_access_token(user):
+def login_required(view):
 
-    now = datetime.now(
-        timezone.utc
-    )
+    @wraps(view)
+    def wrapped_view(*args, **kwargs):
+        if "user_id" not in session:
+            if request.path.startswith("/api/") or request.is_json:
+                return jsonify({
+                    "success": False,
+                    "message": "Login required."
+                }), 401
+            return redirect(url_for("login", next=request.path))
+        return view(*args, **kwargs)
 
-    return jwt.encode(
-        {
-            "sub": str(user["id"]),
-            "username": user["username"],
-            "iat": now,
-            "exp": now + timedelta(
-                minutes=JWT_EXPIRATION_MINUTES
-            )
-        },
-        SECRET_KEY,
-        algorithm="HS256"
-    )
+    return wrapped_view
 
 
 @app.route("/")
-def home():
-
-    if login_required():
-
-        return redirect(
-            url_for("dashboard")
-        )
-
-    return redirect(
-        url_for("login")
-    )
+def index():
+    if "user_id" in session:
+        return redirect(url_for("dashboard"))
+    return redirect(url_for("login"))
 
 
-@app.route(
-    "/login",
-    methods=["GET", "POST"]
-)
+@app.route("/login", methods=["GET", "POST"])
 def login():
+    if "user_id" in session:
+        return redirect(url_for("dashboard"))
+
+    error = None
 
     if request.method == "POST":
-
-        username = (
-            request.form.get(
-                "username",
-                ""
-            ).strip()
-        )
-
-        password = (
-            request.form.get(
-                "password",
-                ""
-            )
-        )
-
-        user = authenticate_user(
-            username,
-            password
-        )
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+        user = authenticate_user(username, password)
 
         if user:
+            session.clear()
+            session.update(user)
+            next_page = request.args.get("next") or url_for("dashboard")
+            return redirect(next_page)
 
-            response = redirect(
-                url_for("dashboard")
-            )
+        error = "Invalid username or password."
 
-            response.set_cookie(
-                JWT_COOKIE_NAME,
-                create_access_token(user),
-                httponly=True,
-                samesite="Lax",
-                max_age=JWT_EXPIRATION_MINUTES * 60
-            )
-
-            return response
-
-        return render_template(
-            "login.html",
-            error="Invalid username or password."
-        )
-
-    return render_template(
-        "login.html"
-    )
+    return render_template("login.html", error=error)
 
 
 @app.route("/logout")
 def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
-    response = redirect(
-        url_for("login")
-    )
 
-    response.delete_cookie(
-        JWT_COOKIE_NAME
-    )
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if "user_id" in session:
+        return redirect(url_for("dashboard"))
 
-    return response
+    error = None
+
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        if len(username) < 3:
+            error = "Username must contain at least 3 characters."
+        elif not email or "@" not in email:
+            error = "Enter a valid email address."
+        elif len(password) < 6:
+            error = "Password must contain at least 6 characters."
+        elif password != confirm_password:
+            error = "Passwords do not match."
+        elif create_user(username, email, password) is None:
+            error = "Username or email already exists."
+        else:
+            send_welcome_email(username, email)
+            return redirect(url_for("login", registered="1"))
+
+    return render_template("register.html", error=error)
 
 
 @app.route("/dashboard")
+@login_required
 def dashboard():
+    tickets_data = get_all_tickets()
+    category_counts = {}
+    priority_counts = {}
 
-    if not login_required():
+    for ticket in tickets_data:
+        category = ticket.get("category") or "Unclassified"
+        priority = ticket.get("priority") or "Unknown"
+        category_counts[category] = category_counts.get(category, 0) + 1
+        priority_counts[priority] = priority_counts.get(priority, 0) + 1
 
-        return redirect(
-            url_for("login")
+    counts = {
+        "total": len(tickets_data),
+        "resolved": sum(
+            ticket["status"] == "Resolved"
+            for ticket in tickets_data
+        ),
+        "open": sum(ticket["status"] == "Open" for ticket in tickets_data),
+        "escalated": sum(
+            ticket["status"] == "Escalated"
+            for ticket in tickets_data
         )
-
-    tickets = get_all_tickets()
-
-    open_count = sum(
-        1
-        for ticket in tickets
-        if ticket["status"] == "Open"
-    )
-
-    p1_count = sum(
-        1
-        for ticket in tickets
-        if ticket["priority"] == "P1"
-    )
-
-    ai_count = sum(
-        1
-        for ticket in tickets
-        if ticket["category"]
-    )
-
+    }
     return render_template(
         "dashboard.html",
-
-        username=g.current_user["username"],
-
-        tickets=tickets,
-
-        open_count=open_count,
-
-        p1_count=p1_count,
-
-        ai_count=ai_count,
-
-        retrieval_accuracy=94.2,
-
-        resolution_rate=86.7,
-
-        average_response_time=5.0
+        user=session,
+        tickets=tickets_data[:8],
+        counts=counts,
+        category_counts=sorted(
+            category_counts.items(),
+            key=lambda item: item[1],
+            reverse=True
+        ),
+        priority_counts=sorted(priority_counts.items()),
+        jira_configured=jira_is_configured(),
+        email_configured=email_is_configured()
     )
 
 
-@app.route("/ticket")
-def ticket_page():
+@app.route("/agent")
+@login_required
+def agent_page():
+    return render_template("index.html", user=session)
 
-    if not login_required():
 
-        return redirect(
-            url_for("login")
-        )
+@app.route("/tickets")
+@login_required
+def tickets():
+    tickets_data = get_all_tickets()
+    resolved_count = sum(
+        ticket.get("status") == "Resolved"
+        for ticket in tickets_data
+    )
+
+    confidence_values = [
+        float(ticket.get("confidence") or 0)
+        for ticket in tickets_data
+    ]
+    retrieval_accuracy = round(
+        sum(confidence_values) / len(confidence_values),
+        1
+    ) if confidence_values else 0
+    resolution_rate = round(
+        resolved_count / len(tickets_data) * 100,
+        1
+    ) if tickets_data else 0
 
     return render_template(
-        "ticket.html"
+        "tickets.html",
+        user=session,
+        tickets=tickets_data,
+        metrics={
+            "retrieval_accuracy": retrieval_accuracy,
+            "resolution_rate": resolution_rate,
+            "average_response_time": "Under 1 sec",
+            "workflow_status": "Generated Resolution"
+        }
     )
+
+
+@app.route("/tickets/<int:ticket_id>/delete", methods=["POST"])
+@login_required
+def delete_ticket_route(ticket_id):
+    delete_ticket(ticket_id)
+    return redirect(url_for("tickets"))
+
+
+@app.route("/api/tickets")
+@login_required
+def tickets_api():
+    return jsonify({
+        "success": True,
+        "tickets": get_all_tickets()
+    })
 
 
 @app.route("/integrations")
+@login_required
 def integrations():
-
-    if not login_required():
-
-        return redirect(
-            url_for("login")
-        )
-
     return render_template(
         "integrations.html",
-        username=g.current_user["username"]
+        user=session,
+        jira_configured=jira_is_configured(),
+        email_configured=email_is_configured()
+    )
+
+
+@app.route("/analytics")
+@login_required
+def analytics():
+    tickets_data = get_all_tickets()
+    category_counts = {}
+    priority_counts = {}
+
+    for ticket in tickets_data:
+        category = ticket.get("category") or "Unclassified"
+        priority = ticket.get("priority") or "Unknown"
+        category_counts[category] = category_counts.get(category, 0) + 1
+        priority_counts[priority] = priority_counts.get(priority, 0) + 1
+
+    return render_template(
+        "analytics.html",
+        user=session,
+        total=len(tickets_data),
+        recent_tickets=sorted(
+            tickets_data,
+            key=lambda ticket: ticket["ticket_id"]
+        ),
+        category_max=max(category_counts.values(), default=1),
+        priority_max=max(priority_counts.values(), default=1),
+        category_counts=sorted(
+            category_counts.items(),
+            key=lambda item: item[1],
+            reverse=True
+        ),
+        priority_counts=sorted(priority_counts.items())
     )
 
 
 @app.route("/settings")
+@login_required
 def settings():
+    return render_template("settings.html", user=session)
 
-    if not login_required():
 
-        return redirect(
-            url_for("login")
-        )
+@app.route("/health")
+def health():
+    return jsonify({
+        "success": True,
+        "application": "SupportPilot",
+        "status": "Running",
+        "capabilities": [
+            "Ticket Classification",
+            "RAG Knowledge Retrieval",
+            "Multi-Agent Workflow"
+        ]
+    })
 
+
+@app.route("/system-health")
+@login_required
+def system_health():
     return render_template(
-        "settings.html",
-        username=g.current_user["username"],
-        jwt_expiration_minutes=JWT_EXPIRATION_MINUTES
+        "health.html",
+        user=session,
+        jira_configured=jira_is_configured(),
+        email_configured=email_is_configured()
     )
 
 
-@app.route(
-    "/ticket/<int:ticket_id>/delete",
-    methods=["POST"]
-)
-def delete_ticket_route(ticket_id):
+@app.route("/ticket", methods=["POST"])
+@login_required
+def process_ticket_route():
 
-    if not login_required():
-
-        return redirect(
-            url_for("login")
-        )
-
-    delete_ticket(ticket_id)
-
-    return redirect(
-        url_for("dashboard")
-    )
-
-
-@app.route(
-    "/ticket",
-    methods=["POST"]
-)
-def create_ticket():
-
-    if not login_required():
-
-        return jsonify({
-
-            "success": False,
-
-            "message":
-                "Authentication required."
-
-        }), 401
-
-    start_time = (
-        time.perf_counter()
-    )
-
-    data = (
-        request.get_json(
-            silent=True
-        )
-        or {}
-    )
+    data = request.get_json(silent=True) or {}
 
     required_fields = [
-
         "employee_name",
         "email",
         "department",
         "title",
         "description"
-
     ]
 
-    missing = []
+    missing_fields = [
+        field
+        for field in required_fields
+        if not str(data.get(field, "")).strip()
+    ]
 
-    for field in required_fields:
-
-        if not str(
-            data.get(
-                field,
-                ""
-            )
-        ).strip():
-
-            missing.append(
-                field
-            )
-
-    if missing:
-
+    if missing_fields:
         return jsonify({
-
             "success": False,
-
-            "message":
+            "message": (
                 "Missing required fields: "
-                + ", ".join(missing)
-
+                + ", ".join(missing_fields)
+            )
         }), 400
 
-    ticket_text = (
+    employee_name = str(
+        data["employee_name"]
+    ).strip()
 
+    email = str(
+        data["email"]
+    ).strip()
+
+    department = str(
+        data["department"]
+    ).strip()
+
+    title = str(
         data["title"]
-        + " "
-        + data["description"]
+    ).strip()
 
+    description = str(
+        data["description"]
+    ).strip()
+
+    ticket_text = (
+        title + " " + description
     )
 
-    classification = (
-        process_ticket(
-            ticket_text
-        )
+    classification = process_ticket(
+        ticket_text
     )
 
     ticket = {
-
-        "id": "TEMP",
-
-        "employee_name":
-            data[
-                "employee_name"
-            ].strip(),
-
-        "email":
-            data[
-                "email"
-            ].strip(),
-
-        "department":
-            data[
-                "department"
-            ].strip(),
-
-        "title":
-            data[
-                "title"
-            ].strip(),
-
-        "description":
-            data[
-                "description"
-            ].strip(),
-
-        "category":
-            classification[
-                "category"
-            ],
-
-        "severity":
-            classification[
-                "severity"
-            ],
-
-        "priority":
-            classification[
-                "priority"
-            ],
-
-        "confidence":
-            classification[
-                "confidence"
-            ],
-
-        "business_impact":
-            classification[
-                "business_impact"
-            ],
-
-        "status":
-            "Open"
-
+        "employee_name": employee_name,
+        "email": email,
+        "department": department,
+        "title": title,
+        "description": description,
+        "category": classification["category"],
+        "severity": classification["severity"],
+        "priority": classification["priority"],
+        "confidence": classification["confidence"],
+        "status": "Open"
     }
 
     ticket_id = save_ticket(
         ticket
     )
 
-    ticket["id"] = (
-        f"T{ticket_id:04d}"
+    ticket["ticket_id"] = ticket_id
+
+    agent_result = support_pilot.process(
+        ticket
     )
 
-    rag_result = (
-        run_rag_pipeline(
-            ticket
+    resolution = agent_result[
+        "resolution"
+    ]
+
+    validation = agent_result[
+        "validation"
+    ]
+
+    escalation = agent_result[
+        "escalation"
+    ]
+
+    recommended_resolution = resolution[
+        "resolution"
+    ]
+
+    resolution_steps = resolution[
+        "steps"
+    ]
+
+    if escalation["escalate"]:
+        status = "Escalated"
+    elif validation["valid"]:
+        status = "Resolved"
+    else:
+        status = "Needs Review"
+
+    update_ticket(
+        ticket_id,
+        status=status,
+        resolution=recommended_resolution
+    )
+
+    jira_result = {
+        "success": False,
+        "configured": False,
+        "status": "Demo Mode",
+        "ticket_id": f"SP-{ticket_id}"
+    }
+
+    if escalation["escalate"]:
+
+        jira_response = create_jira_ticket(
+            ticket_id=ticket_id,
+            title=title,
+            description=description,
+            category=classification["category"],
+            priority=classification["priority"],
+            resolution=recommended_resolution
+        )
+
+        if jira_response.get("success"):
+
+            jira_result = {
+                "success": True,
+                "configured": True,
+                "status": "Active",
+                "ticket_id": jira_response.get(
+                    "ticket_id",
+                    f"SP-{ticket_id}"
+                ),
+                "message": jira_response.get(
+                    "message",
+                    "Jira ticket created."
+                )
+            }
+
+        else:
+
+            jira_result = {
+                "success": False,
+                "configured": jira_response.get(
+                    "configured",
+                    False
+                ),
+                "status": "Demo Mode",
+                "ticket_id": f"SP-{ticket_id}",
+                "message": jira_response.get(
+                    "message",
+                    "Jira integration not configured."
+                )
+            }
+
+    send_email = bool(
+        data.get(
+            "send_email",
+            False
         )
     )
 
-    response_time = round(
-        time.perf_counter()
-        - start_time,
-        3
+    if send_email:
+
+        email_response = send_email_notification(
+            employee_name=employee_name,
+            recipient=email,
+            ticket_id=ticket_id,
+            title=title,
+            category=classification["category"],
+            priority=classification["priority"],
+            resolution=recommended_resolution
+        )
+
+        if email_response.get("success"):
+
+            email_result = {
+                "success": True,
+                "configured": email_response.get(
+                    "configured",
+                    True
+                ),
+                "status": email_response.get(
+                    "status",
+                    "Sent"
+                ),
+                "message": email_response.get(
+                    "message"
+                )
+            }
+
+        else:
+
+            email_result = {
+                "success": False,
+                "configured": email_response.get(
+                    "configured",
+                    False
+                ),
+                "status": email_response.get(
+                    "status",
+                    "Not sent"
+                ),
+                "message": email_response.get(
+                    "message"
+                )
+            }
+
+    else:
+
+        email_result = {
+            "success": False,
+            "configured": False,
+            "status": "Demo Mode",
+            "message": (
+                "Email automation available. "
+                "No email was sent for this demo."
+            )
+        }
+
+    current_time = datetime.now().strftime(
+        "%I:%M %p"
     )
+
+    workflow_activity = [
+
+        {
+            "time": current_time,
+            "agent": "Diagnosis Agent",
+            "message": (
+                "Identified "
+                + classification["category"]
+                + " issue"
+            )
+        },
+
+        {
+            "time": current_time,
+            "agent": "Retrieval Agent",
+            "message": (
+                "Found "
+                + str(
+                    len(
+                        agent_result[
+                            "retrieval"
+                        ][
+                            "retrieved_documents"
+                        ]
+                    )
+                )
+                + " relevant knowledge articles"
+            )
+        },
+
+        {
+            "time": current_time,
+            "agent": "Resolution Agent",
+            "message": (
+                "Generated troubleshooting steps"
+            )
+        },
+
+        {
+            "time": current_time,
+            "agent": "Validation Agent",
+            "message": (
+                "Resolution validation: "
+                + validation["status"]
+            )
+        }
+    ]
+
+    if escalation["escalate"]:
+
+        workflow_activity.append({
+            "time": current_time,
+            "agent": "Escalation Agent",
+            "message": (
+                "Issue is not resolved automatically and requires "
+                "manual review"
+            )
+        })
+
+    elif validation["valid"]:
+
+        workflow_activity.append({
+            "time": current_time,
+            "agent": "System",
+            "message": (
+                "Workflow completed: validated resolution generated; "
+                "ticket marked Resolved"
+            )
+        })
+
+    else:
+
+        workflow_activity.append({
+            "time": current_time,
+            "agent": "System",
+            "message": (
+                "Workflow completed, but the issue is not resolved and "
+                "needs manual review"
+            )
+        })
 
     return jsonify({
 
         "success": True,
 
         "ticket": {
-
-            "id":
-                ticket["id"],
-
-            "employee_name":
-                ticket[
-                    "employee_name"
-                ],
-
-            "email":
-                ticket["email"],
-
-            "department":
-                ticket[
-                    "department"
-                ],
-
-            "title":
-                ticket["title"],
-
-            "description":
-                ticket[
-                    "description"
-                ],
-
-            "status":
-                ticket["status"]
-
+            "ticket_id": ticket_id,
+            "employee_name": employee_name,
+            "email": email,
+            "department": department,
+            "title": title,
+            "description": description,
+            "status": status
         },
 
-        "classification":
-            classification,
+        "classification": classification,
 
-        "analysis":
-            rag_result[
-                "analysis"
-            ],
+        "recommended_resolution":
+            recommended_resolution,
+
+        "resolution_steps":
+            resolution_steps,
+
+        "validation":
+            validation,
+
+        "escalation":
+            escalation,
+
+        "workflow_activity":
+            workflow_activity,
+
+        "workflow":
+            agent_result["workflow"],
+
+        "integrations": {
+            "jira": jira_result,
+            "email": email_result
+        },
 
         "retrieved_documents":
-            rag_result[
+            agent_result[
+                "retrieval"
+            ][
                 "retrieved_documents"
             ],
 
-        "recommended_resolution":
-            rag_result[
-                "resolution"
-            ],
-
-        "resolution_steps":
-            rag_result[
-                "resolution_steps"
-            ],
-
-        "resolution_status":
-            rag_result[
-                "resolution_status"
-            ],
-
-        "rag_workflow":
-            rag_result[
-                "workflow"
-            ],
-
-        "metrics": {
-
-            "response_time_seconds":
-                response_time,
-
-            "documents_retrieved":
-                len(
-                    rag_result[
-                        "retrieved_documents"
-                    ]
-                )
-
-        }
-
+        "analysis":
+            agent_result[
+                "retrieval"
+            ][
+                "analysis"
+            ]
     })
 
 
 if __name__ == "__main__":
-
     app.run(
+        host="127.0.0.1",
+        port=5000,
         debug=True
     )

@@ -51,7 +51,10 @@ def analyze_ticket(ticket):
     return {
 
         "ticket_id":
-            ticket["id"],
+            ticket.get(
+                "ticket_id",
+                ticket.get("id")
+            ),
 
         "category":
             ticket.get("category"),

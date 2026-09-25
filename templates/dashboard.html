@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard | SupportPilot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body>
+    <div class="layout">
+        <aside>
+            <div class="brand"><div class="mark">SP</div> SupportPilot</div>
+            <nav>
+                <a class="active" href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('tickets') }}">Tickets</a>
+                <a href="{{ url_for('agent_page') }}">AI Agent</a>
+                <a href="{{ url_for('integrations') }}">Integrations</a>
+                <a href="{{ url_for('analytics') }}">Analytics</a>
+                <a href="{{ url_for('settings') }}">Settings</a>
+            </nav>
+            <a class="logout" href="{{ url_for('logout') }}">Log out</a>
+        </aside>
+        <main>
+            <header class="top">
+                <div><h1>Good to see you, {{ user.username }}.</h1><p>Here is the current shape of your support queue.</p></div>
+                <div class="user">{{ user.email }}<br><span>Operations workspace</span></div>
+            </header>
+            <section class="stats">
+                <div class="stat blue"><small>Total tickets</small><strong>{{ counts.total }}</strong></div>
+                <div class="stat green"><small>Resolved</small><strong>{{ counts.resolved }}</strong></div>
+                <div class="stat"><small>Open</small><strong>{{ counts.open }}</strong></div>
+                <div class="stat red"><small>Escalated</small><strong>{{ counts.escalated }}</strong></div>
+            </section>
+            <div class="grid">
+                <section class="panel">
+                    <div class="panel-head"><h2>Recent tickets</h2><a class="button" href="{{ url_for('agent_page') }}">Process ticket</a></div>
+                    {% if tickets %}
+                    <div class="table-wrap"><table><thead><tr><th>ID</th><th>Title</th><th>Category</th><th>Priority</th><th>Status</th><th>Action</th></tr></thead><tbody>
+                    {% for ticket in tickets[:5] %}<tr><td>#{{ ticket.ticket_id }}</td><td>{{ ticket.title }}</td><td>{{ ticket.category }}</td><td>{{ ticket.priority }}</td><td><span class="status {{ ticket.status }}">{{ ticket.status }}</span></td><td><form method="post" action="{{ url_for('delete_ticket_route', ticket_id=ticket.ticket_id) }}" onsubmit="return confirm('Delete this ticket permanently?');"><button class="dashboard-delete" type="submit">Delete</button></form></td></tr>{% endfor %}
+                    </tbody></table></div>
+                    {% else %}<div class="empty">No tickets yet. Start with the AI agent to create the first one.</div>{% endif %}
+                </section>
+                <section class="panel"><h2>Quick actions</h2><div class="quick"><a href="{{ url_for('agent_page') }}"><strong>Run AI resolution</strong><span>Classify a ticket and generate troubleshooting steps.</span></a><a href="{{ url_for('tickets') }}"><strong>View ticket data</strong><span>Open submitted tickets and generated resolutions.</span></a><a href="{{ url_for('system_health') }}"><strong>Check system health</strong><span>View live service and integration status.</span></a></div></section>
+            </div>
+            <section class="feature-grid">
+                <div class="panel feature-card">
+                    <h2>Tickets</h2>
+                    <p>Live support queue and ticket statuses.</p>
+                    <div class="feature-list">
+                        <div><span>Total tickets</span><b>{{ counts.total }}</b></div>
+                        <div><span>Resolved</span><b>{{ counts.resolved }}</b></div>
+                        <div><span>Escalated</span><b>{{ counts.escalated }}</b></div>
+                    </div>
+                    <a class="button secondary" href="{{ url_for('tickets') }}">Open tickets</a>
+                </div>
+                <div class="panel feature-card">
+                    <h2>AI Agent</h2>
+                    <p>Classify tickets and generate resolutions with RAG.</p>
+                    <div class="feature-list">
+                        <div><span>Classification</span><b>Ready</b></div>
+                        <div><span>Knowledge retrieval</span><b>Ready</b></div>
+                        <div><span>Workflow agents</span><b>Ready</b></div>
+                    </div>
+                    <a class="button" href="{{ url_for('agent_page') }}">Run AI agent</a>
+                </div>
+                <div class="panel feature-card">
+                    <h2>Integrations</h2>
+                    <p>Automation connection status.</p>
+                    <div class="feature-list">
+                        <div><span>Jira</span><b class="feature-badge {{ 'on' if jira_configured else '' }}">{{ 'Live' if jira_configured else 'Demo' }}</b></div>
+                        <div><span>Email</span><b class="feature-badge {{ 'on' if email_configured else '' }}">{{ 'Live' if email_configured else 'Demo' }}</b></div>
+                    </div>
+                    <a class="button secondary" href="{{ url_for('integrations') }}">View integrations</a>
+                </div>
+                <div class="panel feature-card">
+                    <h2>Analytics</h2>
+                    <p>Current ticket categories and priorities.</p>
+                    <div class="feature-list">
+                        {% for name, count in category_counts[:2] %}<div><span>{{ name }}</span><b>{{ count }}</b></div>{% else %}<div><span>No ticket data</span><b>0</b></div>{% endfor %}
+                        {% for name, count in priority_counts[:2] %}<div><span>{{ name }} priority</span><b>{{ count }}</b></div>{% endfor %}
+                    </div>
+                    <a class="button secondary" href="{{ url_for('analytics') }}">View analytics</a>
+                </div>
+            </section>
+            <section class="panel settings-panel">
+                <div class="panel-head"><div><h2>Settings</h2><p class="settings-copy">Signed in as {{ user.username }} ({{ user.email }}). Manage your workspace profile and environment connections.</p></div><a class="button secondary" href="{{ url_for('settings') }}">Open settings</a></div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
