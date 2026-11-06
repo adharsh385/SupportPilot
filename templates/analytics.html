@@ -27,6 +27,12 @@
         .summary strong { display: block; margin-top: 4px; font: 46px Georgia, serif; }
         .summary-copy { max-width: 520px; }
         .summary-copy p { margin: 6px 0 0; color: #d4e3e9; }
+        .classifier-summary { margin-top: 18px; }
+        .classifier-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; }
+        .classifier-metrics div { padding: 13px; background: #f5f8fb; border: 1px solid var(--line); border-radius: 6px; }
+        .classifier-metrics strong { display: block; font-size: 21px; }
+        .classifier-metrics span { color: var(--muted); font-size: 11px; }
+        .evaluation-link { color: var(--blue); font-size: 12px; font-weight: bold; text-decoration: none; }
         .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 18px; }
         .panel { padding: 24px; background: var(--surface); border: 1px solid var(--line); }
         .panel-head { display: flex; justify-content: space-between; align-items: start; gap: 16px; margin-bottom: 20px; }
@@ -52,7 +58,9 @@
         @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
         @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } aside { padding: 16px; } nav { display: flex; overflow: auto; } .logout { margin: 12px; } .chart-grid { grid-template-columns: 1fr; } }
         @media (max-width: 620px) { main { padding: 24px 16px; } .summary { display: block; } .panel { padding: 18px; } .bar-row { grid-template-columns: 90px 1fr 28px; gap: 8px; } .ticket-panel { overflow-x: auto; } .ticket-table { min-width: 650px; } }
+        @media (max-width: 620px) { .classifier-metrics { grid-template-columns: repeat(2, 1fr); } }
     </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
 </head>
 <body>
     <div class="layout">
@@ -74,6 +82,16 @@
             <section class="summary">
                 <div><span class="subtle">Total tickets processed</span><strong>{{ total }}</strong></div>
                 <div class="summary-copy"><strong style="font-size: 20px; margin: 0;">A clearer view of support demand</strong><p>Compare categories and priorities at a glance, then inspect the latest ticket information below.</p></div>
+            </section>
+            <section class="panel classifier-summary">
+                <div class="panel-head"><div><h2>AI Classifier Test Performance</h2><p>Evaluation uses isolated sample data, not production ticket records.</p></div><a class="evaluation-link" href="{{ url_for('dashboard') }}#classifierEvaluation">Run classifier test</a></div>
+                <div class="classifier-metrics">
+                    <div><strong>{{ '%.1f%%'|format(classifier_evaluation.accuracy) if classifier_evaluation else 'N/A' }}</strong><span>Accuracy</span></div>
+                    <div><strong>{{ '%.1f%%'|format(classifier_evaluation.precision) if classifier_evaluation else 'N/A' }}</strong><span>Precision</span></div>
+                    <div><strong>{{ '%.1f%%'|format(classifier_evaluation.recall) if classifier_evaluation else 'N/A' }}</strong><span>Recall</span></div>
+                    <div><strong>{{ '%.1f%%'|format(classifier_evaluation.f1_score) if classifier_evaluation else 'N/A' }}</strong><span>F1 Score</span></div>
+                </div>
+                <p class="panel-head"><small>{{ classifier_evaluation.samples if classifier_evaluation else 0 }} isolated test samples</small></p>
             </section>
             <div class="chart-grid">
                 <section class="panel">

@@ -137,18 +137,8 @@ def process_ticket(text):
         probabilities
     )
 
-    confidence = max(
-        ml_confidence,
-        0.91
-    )
-
-    confidence = min(
-        confidence,
-        0.99
-    )
-
     confidence_percent = round(
-        confidence * 100,
+        ml_confidence * 100,
         2
     )
 

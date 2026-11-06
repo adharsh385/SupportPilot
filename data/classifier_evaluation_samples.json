@@ -1,0 +1,14 @@
+[
+  {"text": "VPN connection keeps timing out", "expected_category": "VPN"},
+  {"text": "Corporate VPN will not connect", "expected_category": "VPN"},
+  {"text": "Office Wi-Fi has disconnected", "expected_category": "Network"},
+  {"text": "Internet connection is very slow", "expected_category": "Network"},
+  {"text": "I need to reset my account password", "expected_category": "Password"},
+  {"text": "My password login is locked", "expected_category": "Password"},
+  {"text": "The application crashes when I open it", "expected_category": "Software"},
+  {"text": "Software installation failed", "expected_category": "Software"},
+  {"text": "Laptop keyboard is not working", "expected_category": "Hardware"},
+  {"text": "Computer monitor hardware failure", "expected_category": "Hardware"},
+  {"text": "My computer freezes during startup", "expected_category": "System"},
+  {"text": "Windows system error after restart", "expected_category": "System"}
+]

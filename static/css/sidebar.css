@@ -1,0 +1,134 @@
+.layout > aside,
+.app-container .sidebar {
+    display: flex;
+    flex: 0 0 260px;
+    flex-direction: column;
+    width: 260px;
+    min-height: 100vh;
+    padding: 18px 14px 16px;
+    border-right: 1px solid #e5e7eb;
+    background: #fff;
+    color: #172033;
+}
+
+.layout > aside .brand,
+.layout > aside .dashboard-brand,
+.app-container .sidebar .brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 8px 18px;
+    border-bottom: 1px solid #eee;
+    color: #25324b;
+    font-size: 18px;
+}
+
+.layout > aside .mark,
+.layout > aside .dashboard-brand-mark,
+.app-container .sidebar .brand-logo {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border: 0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #087fe5, #ed4b67);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.layout > aside nav,
+.app-container .sidebar nav {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 8px;
+    margin: 18px 0 0;
+}
+
+.layout > aside nav a,
+.app-container .sidebar .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 9px 10px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    box-shadow: none;
+    color: #667085;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.2;
+    text-decoration: none;
+}
+
+.layout > aside nav a:hover,
+.layout > aside nav a.active,
+.app-container .sidebar .menu-item:hover,
+.app-container .sidebar .menu-item.active {
+    background: #edf4ff;
+    color: #0878d1;
+    font-weight: 700;
+    box-shadow: inset 0 0 0 1px rgba(8, 120, 209, .08);
+}
+
+.layout > aside nav a:not(.dashboard-nav-item)::before {
+    display: inline-grid;
+    place-items: center;
+    width: 20px;
+    flex: 0 0 20px;
+    color: currentColor;
+}
+
+.layout > aside nav a[href="/dashboard"]::before { content: "▦"; }
+.layout > aside nav a[href="/tickets"]::before { content: "▣"; }
+.layout > aside nav a[href="/agent"]::before { content: "♙"; }
+.layout > aside nav a[href="/integrations"]::before { content: "▤"; }
+.layout > aside nav a[href="/analytics"]::before { content: "▧"; }
+.layout > aside nav a[href="/settings"]::before { content: "⚙"; }
+.layout > aside nav a[href="/system-health"]::before { content: "＋"; }
+
+.layout > aside .logout,
+.layout > aside .dashboard-logout,
+.app-container .sidebar .logout {
+    display: block;
+    width: auto;
+    margin: 12px 10px 0;
+    padding: 10px 0;
+    border: 0;
+    color: #667085;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.layout > aside .logout:hover,
+.layout > aside .dashboard-logout:hover,
+.app-container .sidebar .logout:hover {
+    background: transparent;
+    color: #0878d1;
+}
+
+@media (max-width: 700px) {
+    .layout > aside,
+    .app-container .sidebar {
+        width: 100%;
+        min-height: auto;
+        padding: 16px;
+    }
+
+    .layout > aside nav,
+    .app-container .sidebar nav {
+        flex-direction: row;
+        overflow-x: auto;
+    }
+
+    .layout > aside nav a,
+    .app-container .sidebar .menu-item {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+}

@@ -1,3 +1,4 @@
+from config import ESCALATION_CONFIDENCE_THRESHOLD
 from rag.pipeline import run_rag_pipeline
 
 
@@ -128,6 +129,13 @@ class ValidationAgent:
 
 class EscalationAgent:
 
+    def __init__(self, confidence_threshold=None):
+        self.confidence_threshold = (
+            ESCALATION_CONFIDENCE_THRESHOLD
+            if confidence_threshold is None
+            else float(confidence_threshold)
+        )
+
     def run(
         self,
         ticket,
@@ -139,6 +147,48 @@ class EscalationAgent:
             "Low"
         )
 
+        if ticket.get("human_requested"):
+            return {
+                "agent": "Escalation Agent",
+                "status": "Active",
+                "escalate": True,
+                "reason": "Human support requested",
+                "message": "Ticket escalated at the user's request."
+            }
+
+        if ticket.get("classification_failed"):
+            return {
+                "agent": "Escalation Agent",
+                "status": "Active",
+                "escalate": True,
+                "reason": "AI classification failed",
+                "message": (
+                    "Ticket classification failed and requires human review."
+                )
+            }
+
+        if ticket.get("resolution_failed"):
+            return {
+                "agent": "Escalation Agent",
+                "status": "Active",
+                "escalate": True,
+                "reason": "AI response failed",
+                "message": "AI resolution failed and requires human review."
+            }
+
+        confidence = ticket.get("confidence")
+        if (
+            confidence is not None
+            and float(confidence) < self.confidence_threshold
+        ):
+            return {
+                "agent": "Escalation Agent",
+                "status": "Active",
+                "escalate": True,
+                "reason": "AI confidence below configured threshold",
+                "message": "Low-confidence ticket escalated for human review."
+            }
+
         if severity == "Critical":
 
             return {
@@ -148,6 +198,9 @@ class EscalationAgent:
 
                 "status":
                     "Active",
+
+                "reason":
+                    "Critical severity",
 
                 "escalate":
                     True,
@@ -165,6 +218,9 @@ class EscalationAgent:
 
                 "status":
                     "Active",
+
+                "reason":
+                    "Resolution failed validation",
 
                 "escalate":
                     True,

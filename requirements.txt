@@ -1,5 +1,8 @@
 Flask
 scikit-learn
 joblib
-requests
+pandas
+streamlit
+plotly
 python-dotenv
+requests

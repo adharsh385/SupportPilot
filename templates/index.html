@@ -18,6 +18,7 @@
         rel="stylesheet"
         href="{{ url_for('static', filename='css/style.css') }}"
     >
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
 
 </head>
 
@@ -65,7 +66,7 @@
             </a>
 
             <a class="menu-item" href="{{ url_for('analytics') }}">
-                ▥
+                ▧
                 Analytics
             </a>
 
@@ -103,6 +104,7 @@
                 <div>
                     <h2>Generate New Ticket</h2>
                     <p>Submit a real support request for classification and AI resolution.</p>
+                    <a class="classifier-link" href="{{ url_for('dashboard') }}#classifierEvaluation">View classifier evaluation</a>
                 </div>
                 <span id="formStatus"></span>
             </div>
@@ -114,6 +116,7 @@
                     <label>Ticket title<input name="title" required placeholder="What is the issue?"></label>
                 </div>
                 <label>Description<textarea name="description" required rows="4" placeholder="Describe the problem, impact, and what you already tried."></textarea></label>
+                <label class="email-toggle"><input name="human_support_requested" type="checkbox"> Request human support</label>
                 <label class="email-toggle"><input name="send_email" type="checkbox"> Send resolution notification by email</label>
                 <p class="email-help">The notification is sent to the email entered above. Live delivery requires the Gmail sender account and App Password in the project's <code>.env</code> file.</p>
                 <button type="submit" id="submitTicketButton">Submit ticket for AI resolution</button>

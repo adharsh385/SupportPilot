@@ -31,6 +31,7 @@
         .button { display: inline-block; margin-top: 22px; padding: 11px 14px; border-radius: 3px; background: var(--blue); color: white; text-decoration: none; font-weight: bold; font-size: 12px; }
         @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } aside { padding: 16px; } nav { display: flex; overflow: auto; } .logout { margin: 12px; } .services { grid-template-columns: 1fr; } }
     </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
 </head>
 <body>
     <div class="layout">

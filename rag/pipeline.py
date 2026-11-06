@@ -3,7 +3,6 @@ from rag.analyzer import analyze_ticket
 from rag.retriever import KnowledgeRetriever
 
 from rag.generator import (
-    build_context,
     generate_resolution
 )
 
@@ -45,10 +44,6 @@ def run_rag_pipeline(ticket):
         "knowledge_retrieval"
     ] = "completed"
 
-    context = build_context(
-        results
-    )
-
     workflow[
         "context_augmentation"
     ] = "completed"
@@ -69,9 +64,6 @@ def run_rag_pipeline(ticket):
 
         "retrieved_documents":
             results,
-
-        "context":
-            context,
 
         "resolution":
             generated["text"],
